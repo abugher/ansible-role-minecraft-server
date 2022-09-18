@@ -1,0 +1,88 @@
+#!/bin/bash
+#
+# Launch the server.  If necessary, do other things:
+#   - unpack the current version
+#   - shut down the previous version
+
+function main() {
+  # Read active version.
+  read version < local/version
+  if test '' = "${version}"; then
+    fail "Failed to read a version string."
+  fi
+  unpack_dir="active/bedrock-server-${version}"
+  zip_rel_path="../../upstream/bedrock-server-${version}.zip"
+  # Unpack active version.
+  if ! test -d "${unpack_dir}"; then
+    mkdir "${unpack_dir}" || fail "Failed to create unpack directory:  '${unpack_dir}'"
+    cd "${unpack_dir}" || fail "Failed to enter unpack directory:  '${unpack_dir}'"
+    unzip "${zip_rel_path}" || fail "Failed to unzip:  '${zip_rel_path}'"
+    cd - || fail "Failed to change directory back from the unpack directory."
+  fi
+  # Read active PID.
+  if test -e active/pid; then
+    read pid < active/pid
+    # Stop active PID.
+    if ps -p "${pid}" >/dev/null 2>&1; then
+      kill "${pid}"
+      dots "${pid}"
+      if ps -p "${pid}" >/dev/null 2>&1; then
+        kill -9 "${pid}"
+        dots "${pid}"
+        if ps -p "${pid}" >/dev/null 2>&1; then
+          fail "Failed to kill PID:  '${pid}'"
+        fi
+      fi
+    fi
+    
+  fi
+  # Configure active version.
+  cp local/conf/* "${unpack_dir}"/ || fail "Failed to copy configuration."
+  # Start active version.
+  # It isn't actually interactive for just a moment, but hopefully that isn't noticeable.
+  echo
+  echo
+  echo "----------------------------"
+  echo "STARTING INTERACTIVE SESSION"
+  echo "----------------------------"
+  echo
+  echo
+  "${unpack_dir}"/bedrock-server & pid="${!}"
+  # Write active PID.
+  echo "${pid}" > active/pid
+  # Establish interactive session.
+  fg; ret="${?}"
+  if ! test 0 = "${ret}"; then
+    fail "Returned:  ${ret}"
+  else
+    echo "Returned:  ${ret}"
+  fi
+}
+
+
+function dots() {
+  pid="${1}"
+
+  for i in $(seq 1 10); do
+    if ! ps -p "${pid}" >/dev/null 2>&1; then
+      break
+    fi
+    echo -n '.'
+    sleep 1
+  done
+  echo
+}
+
+
+function error() {
+  printf '%s\n' "ERROR:  ${1}" >&2
+}
+
+
+function fail() {
+  error "${1}"
+  exit "${2:-1}"
+}
+
+
+main

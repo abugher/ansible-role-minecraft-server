@@ -1,0 +1,13 @@
+[
+  {
+    "comment":  "This file is copied in to the unpacked server directory.  Don't edit it in place.  (You know you're going to clobber it unpacking the next server release.)  Find the master copy, edit that, and copy it in."
+  },
+
+
+
+
+  {
+    "permission": "visitor",
+    "xuid": "234114123"
+  }
+]
