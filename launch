@@ -11,12 +11,12 @@ function main() {
     fail "Failed to read a version string."
   fi
   unpack_dir="active/bedrock-server-${version}"
-  zip_rel_path="../../upstream/bedrock-server-${version}.zip"
   # Unpack active version.
   if ! test -d "${unpack_dir}"; then
     mkdir "${unpack_dir}" || fail "Failed to create unpack directory:  '${unpack_dir}'"
     cd "${unpack_dir}" || fail "Failed to enter unpack directory:  '${unpack_dir}'"
-    unzip "${zip_rel_path}" || fail "Failed to unzip:  '${zip_rel_path}'"
+    zip_file="${OLDPWD}/upstream/bedrock-server-${version}.zip"
+    unzip "${zip_file}" || fail "Failed to unzip:  '${zip_file}'"
     cd - || fail "Failed to change directory back from the unpack directory."
   fi
   # Read active PID.
@@ -39,7 +39,9 @@ function main() {
   # Configure active version.
   cp local/conf/* "${unpack_dir}"/ || fail "Failed to copy configuration."
   # Start active version.
-  # It isn't actually interactive for just a moment, but hopefully that isn't noticeable.
+  if ! test -e active/commands; then
+    mkfifo active/commands || fail "Failed to create named pipe for commands."
+  fi
   echo
   echo
   echo "----------------------------"
@@ -47,11 +49,25 @@ function main() {
   echo "----------------------------"
   echo
   echo
-  "${unpack_dir}"/bedrock-server & pid="${!}"
+  echo 'Type "stop" to stop the server.'
+  echo
+  echo
+  # It isn't actually interactive for just a moment, but hopefully that isn't noticeable.
+  cd "${unpack_dir}"
+  ./bedrock_server < "${OLDPWD}"/active/commands & pid="${!}"
+  cd -
   # Write active PID.
   echo "${pid}" > active/pid
   # Establish interactive session.
-  fg; ret="${?}"
+  cat > active/commands
+
+  # Execution should halt here until the user stops the server, the server
+  # crashes, or the user ends or backgrounds the cat process.  Ending or
+  # backgrounding the cat process should cause an apparent hang, as the wait
+  # line below will not return until the server process ends.
+
+  # Clean up.
+  wait "${pid}"; ret="${?}"
   if ! test 0 = "${ret}"; then
     fail "Returned:  ${ret}"
   else
