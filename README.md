@@ -15,3 +15,5 @@
 * Initify.  This launch script is probably doing the job of an init script.  If it proves worthwhile, modify it into an actual init script.  The automatic update script should refer to the init script to restart the service only if it is already running.
 
 * Package.  This might make a nice deb file.  Frequent updates should not be necessary (not counting corrections to slipshod code) if automatic updates of upstream material can be scripted.
+
+* Ansible.  I should have an ansible role to deploy this.
