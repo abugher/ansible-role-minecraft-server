@@ -10,6 +10,8 @@
 
 # To Do
 
+* Clean up after unzip failure and such.  Don't make it look like a new version exists.
+
 * Automatic updates.  It would be cool to check for the latest version, download it, declare that to be the current version, and then proceed as usual.  This should probably be a separate script to be run on a cron job.
 
 * Initify.  This launch script is probably doing the job of an init script.  If it proves worthwhile, modify it into an actual init script.  The automatic update script should refer to the init script to restart the service only if it is already running.

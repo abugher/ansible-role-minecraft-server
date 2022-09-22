@@ -3,6 +3,7 @@
 # Launch the server.  If necessary, do other things:
 #   - unpack the current version
 #   - shut down the previous version
+#   - etc
 
 function main() {
   # Read active version.
@@ -38,6 +39,11 @@ function main() {
   fi
   # Configure active version.
   cp local/conf/* "${unpack_dir}"/ || fail "Failed to copy configuration."
+  if ! test -s "${unpack_dir}"/worlds; then
+    mv "${unpack_dir}"/worlds "${unpack_dir}"/worlds_original  # Don't fail if the file is absent.
+    ln -s ../worlds "${unpack_dir}"/worlds || fail "Failed to create symlink for worlds."
+    mkdir -p "${unpack_dir}"/../worlds || fail "Failed to create worlds directory."
+  fi
   # Start active version.
   if ! test -e active/commands; then
     mkfifo active/commands || fail "Failed to create named pipe for commands."
