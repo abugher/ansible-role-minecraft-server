@@ -1,3 +1,11 @@
+# Usage
+
+Place the current server zip file under `upstream/`.  Write the corresponding
+version string into `local/version`.  Execute `launch` as user `nobody`.  The
+new server will be installed if necessary, and the server will be launched.
+Save files should be preserved.
+
+
 # Files
 
 `.gitignore` - Specify which files should be tracked or untracked.  Track this.
@@ -7,6 +15,7 @@
 `active` - This is where code from upstream gets unpacked, then files from `local/` get copied in, and then the code is executed here to start the server.  Do not track.
 
 `local/` - Files contributed to this repo, including configuration files to copied to the current server release under `unpacked/`.  Track everything under this directory.
+
 
 # To Do
 
