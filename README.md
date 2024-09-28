@@ -34,3 +34,5 @@ if necessary and then launched.  Save files should be preserved.
 * Package.  This might make a nice deb file.  Frequent updates should not be necessary (not counting corrections to slipshod code) if automatic updates of upstream material can be scripted.
 
 * Ansible.  I should have an ansible role to deploy this.
+
+* Dedicated user.  `nobody` is better than `root`, but a special `minecraft` or `minecraft-server` user would be better.
