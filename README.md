@@ -9,7 +9,8 @@ Get the bedrock server for linux from a link on this page:
 * Execute `launch` as user `nobody`.  
 
 Any older server instances will be stopped.  The new server will be installed
-if necessary and then launched.  Save files should be preserved.
+if necessary and then launched.  Save files should be preserved.  The process
+will run in the foreground; consider launching in a screen session.
 
 
 # Files
