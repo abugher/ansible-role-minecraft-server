@@ -8,8 +8,8 @@ Get the bedrock server for linux from a link on this page:
 * Write the corresponding version string into `local/version`.  
 * Execute `launch` as user `nobody`.  
 
-The new server will be installed if necessary, and the server will be launched.
-Save files should be preserved.
+Any older server instances will be stopped.  The new server will be installed
+if necessary and then launched.  Save files should be preserved.
 
 
 # Files
