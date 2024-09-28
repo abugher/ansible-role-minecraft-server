@@ -4,9 +4,11 @@ Get the bedrock server for linux from a link on this page:
 
   https://www.minecraft.net/en-us/download/server/bedrock
 
-Place the current server zip file under `upstream/`.  Write the corresponding
-version string into `local/version`.  Execute `launch` as user `nobody`.  The
-new server will be installed if necessary, and the server will be launched.
+* Place the current server zip file under `upstream/`.  
+* Write the corresponding version string into `local/version`.  
+* Execute `launch` as user `nobody`.  
+
+The new server will be installed if necessary, and the server will be launched.
 Save files should be preserved.
 
 
