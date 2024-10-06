@@ -9,7 +9,8 @@ Get the bedrock server for linux from a link on this page:
 * Execute `launch` as user `nobody`.  
 
 Any older server instances will be stopped.  The new server will be installed
-if necessary and then launched.  Save files should be preserved.
+if necessary and then launched.  Save files should be preserved.  The process
+will run in the foreground; consider launching in a screen session.
 
 
 # Files
@@ -34,3 +35,5 @@ if necessary and then launched.  Save files should be preserved.
 * Package.  This might make a nice deb file.  Frequent updates should not be necessary (not counting corrections to slipshod code) if automatic updates of upstream material can be scripted.
 
 * Ansible.  I should have an ansible role to deploy this.
+
+* Dedicated user.  `nobody` is better than `root`, but a special `minecraft` or `minecraft-server` user would be better.
