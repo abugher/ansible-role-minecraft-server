@@ -5,6 +5,14 @@
 #   - shut down the previous version
 #   - etc
 
+# probably not the best choice
+correct_user="nobody"
+
+if ! test "${correct_user}" = "${USER}"; then
+  echo "Warning:  Switching user to:  '${correct_user}'"
+  exec sudo -u "${correct_user}" "${0}"
+fi
+
 function main() {
   # Read active version.
   read version < local/version
