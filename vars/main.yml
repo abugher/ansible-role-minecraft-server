@@ -1,4 +1,6 @@
 ---
+install_packages:
+  - 'wget'
 user_groups:
   - 'minecraft-server'
 users:
