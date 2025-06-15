@@ -1,0 +1,110 @@
+#!/bin/bash
+#
+# Launch the server.  If necessary, do other things:
+#   - unpack the current version
+#   - shut down the previous version
+
+
+conf_dir='/etc/minecraft-server'
+version_file="${conf_dir}/version"
+properties_file="${conf_dir}/server.properties"
+permissions_file="${conf_dir}/permissions.json"
+zip_dir='/home/minecraft-server/releases-zipped'
+unzip_dir='/home/minecraft-server/releases-unzipped'
+worlds_dir='/home/minecraft-server/worlds'
+commands_file='/home/minecraft-server/commands'
+download_url_prefix='https://www.minecraft.net/bedrockdedicatedserver/bin-linux/bedrock-server-'
+download_url_suffix='.zip'
+# User agent string is mandatory, but they don't seem picky about what it is.
+user_agent='Firefox or something'
+
+
+function main() {
+  read version < "${version_file}"
+  if test '' = "${version}"; then
+    fail "Failed to read a version string."
+  fi
+  release_dir="${unzip_dir}/${version}"
+  zip_file="${zip_dir}/bedrock-server-${version}.zip"
+  download_url="${download_url_prefix}${version}${download_url_suffix}"
+
+  prepare
+  download
+  unpack
+  configure
+  run_server
+}
+
+
+function prepare() {
+  if ! test -e "${commands_file}"; then
+    mkfifo "${commands_file}" || fail "Failed to create named pipe for commands."
+  fi
+  mkdir -p "${zip_dir}" || fail "Failed to create directory for zipped releases."
+  mkdir -p "${unzip_dir}" || fail "Failed to create directory for unzipped releases."
+  mkdir -p "${worlds_dir}" || fail "Failed to create worlds directory."
+}
+
+
+function download() {
+  if ! test -e "${zip_file}"; then
+    echo "Downloading version:  '${version}'"
+    cd "${zip_dir}" || fail "Failed to enter directory for zipped releases."
+    if ! wget -U "${user_agent}" "${download_url}" && stat "${zip_file}"; then
+      fail "Failed to download zipped release."
+    fi
+  fi
+}
+
+
+function unpack() {
+  if ! test -d "${release_dir}"; then
+    echo "Unpacking version:  '${version}'"
+    mkdir "${release_dir}" || fail "Failed to create unpack directory:  '${release_dir}'"
+    cd "${release_dir}" || fail "Failed to enter unpack directory:  '${release_dir}'"
+    unzip "${zip_file}" || fail "Failed to unzip:  '${zip_file}'"
+  fi
+}
+
+
+function configure() {
+  echo "Configuring version:  '${version}'"
+  if ! test -L "${release_dir}"/worlds; then
+    rm -rf "${release_dir}"/worlds || fail "Failed to remove existing worlds directory."
+    ln -s "${worlds_dir}" "${release_dir}"/worlds || fail "Failed to create symlink for worlds."
+  fi
+  if ! test -L "${release_dir}"/server.properties; then
+    rm -f "${release_dir}"/server.properties || fail "Failed to remove existing properties file."
+    ln -s "${properties_file}" "${release_dir}"/server.properties || fail "Failed to link properties file."
+  fi
+  if ! test -L "${release_dir}"/permissions.json; then
+    rm -f "${release_dir}"/permissions.json || fail "Failed to remove existing permissions file."
+    ln -s "${permissions_file}" "${release_dir}"/permissions.json || fail "Failed to link permissions file."
+  fi
+}
+
+
+function run_server() {
+  echo "Starting version:  '${version}'"
+  cd "${release_dir}" || fail "Failed to enter release directory."
+  ./bedrock_server < <(tail -F "${commands_file}"); ret="${?}"
+  if test 0 = "${ret}"; then
+    echo "Returned:  ${ret}"
+  else
+    fail "Returned:  ${ret}"
+  fi
+}
+
+
+function error() {
+  printf '%s\n' "ERROR:  ${1}" >&2
+}
+
+
+function fail() {
+  error "${1}"
+  exit "${2:-1}"
+}
+
+
+main

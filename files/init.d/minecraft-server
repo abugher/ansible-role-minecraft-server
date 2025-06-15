@@ -1,0 +1,137 @@
+#!/bin/bash
+
+### BEGIN INIT INFO
+# Provides:          minecraft-server
+# Required-Start:
+# Required-Stop:
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Start minecraft-server at boot time
+# Description:       Start minecraft-server at boot time
+### END INIT INFO
+
+
+action="${1}"
+user=minecraft-server
+pid_file=/var/run/minecraft-server.pid
+log_file=/var/log/minecraft-server.log
+command_file=/home/minecraft-server/commands
+
+function start {
+  echo -n "Starting..."
+  # If PID file exists:
+  if test -e $pid_file; then
+    pid=$(< $pid_file)
+    # If PID is running:
+    if ps -p $pid >/dev/null 2>&1; then
+      echo "Warning:  minecraft-server already started with PID:  ${pid}"
+      return 0
+    fi
+    # If PID is not running:
+    if rm $pid_file; then
+      echo "Warning:  minecraft-server not running, but PID file is present with PID:  ${pid}"
+    else
+      echo "Error:  Could not remove stale PID file:  ${pid_file}"
+      return 1
+    fi
+    echo "Warning:  ${pid_file} existed (removed), but PID ${pid} is not running."
+  fi
+
+  su -c /usr/local/bin/minecraft-server $user > "${log_file}" 2>&1 &
+  echo $! > $pid_file
+  disown
+  echo "OK"
+  return 0
+}
+
+
+function stop {
+  echo -n "Stopping..."
+  # If PID file exists
+  if test -e $pid_file; then
+    pid=$(< $pid_file)
+    # If PID is running
+    if ps -p $pid >/dev/null 2>&1; then
+      # Try telling it to stop nicely.
+      if su -c "timeout 5s tee -a '${command_file}'" $user <<< 'stop'; then
+        for i in {1..30}; do
+          sleep 1
+          echo -n '.'
+          if tail -n 1 "${log_file}" | grep -q '^Returned:  0$'; then
+            # Just give it a second to return a code or whatever.
+            sleep 1
+            if ps -p $pid >/dev/null 2>&1; then
+              echo "Warning:  Log contains lies!"
+              break
+            else
+              echo "OK"
+              return 0
+            fi
+          fi
+          if tail "${log_file}" | grep -qE '^Returned:  ([^0].*|)$'; then
+            echo "Warning:  Server returned non-zero.  See log file:  '${log_file}'"
+            return 0
+          fi
+        done
+      else
+        echo "Warning:  Failed to write 'stop' command to FIFO."
+      fi
+      # If PID is killed
+      if kill $pid; then
+        rm $pid_file
+        echo "OK"
+        return 0
+      fi
+      echo "Error:  Failed to kill PID:  ${pid}"
+      return 1
+    fi
+    echo "Warning:  $pid_file exists, but PID ${pid} is not running."
+    ls -ld $pid_file
+    return 0
+  fi
+
+  echo "Warning:  minecraft-server does not appear to be started."
+  return 0
+}
+
+
+function status {
+  echo -en "Status:  "
+  if test -e $pid_file; then
+    pid=$(< $pid_file)
+    if ps -p $pid >/dev/null 2>&1; then
+      echo -e "started with pid:  ${pid}"
+      return 0
+    fi
+    echo -e "${pid_file} exists, but PID ${pid} is not running."
+    return 2
+  fi
+
+  echo -e "stopped"
+  return 1
+}
+
+
+case "${action}" in
+  'start')
+    start
+    exit $?
+    ;;
+  'stop')
+    stop
+    exit $?
+    ;;
+  'restart')
+    stop && sleep 1 && start
+    exit $?
+    ;;
+  'status')
+    status
+    exit $?
+    ;;
+  *)
+    echo -e "Usage:\n  ${0} {start|stop|status}"
+    exit 1;
+    ;;
+esac
+
